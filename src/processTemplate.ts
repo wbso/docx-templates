@@ -644,7 +644,10 @@ export function getCommand(
   // Get a cleaned version of the command
 
   let cmd = command.trim();
-  if (cmd[0] === '*') {
+
+  if (cmd === 'tte') {
+    cmd = 'IMAGE tteFunc()';
+  } else if (cmd[0] === '*') {
     const aliasName = cmd.slice(1).trim();
     if (!shorthands[aliasName])
       throw new InvalidCommandError('Unknown alias', cmd);
