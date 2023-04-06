@@ -249,4 +249,36 @@ if (process.env.DEBUG) setDebugLogSink(console.log);
       })
     ).rejects.toThrowErrorMatchingSnapshot();
   });
+
+  it('Incomplete conditional statement: missing END-IF', async () => {
+    const template = await fs.promises.readFile(
+      path.join(__dirname, 'fixtures', 'missingEndIf.docx')
+    );
+    await expect(
+      createReport({
+        noSandbox,
+        template,
+        data: {},
+        rejectNullish: true,
+      })
+    ).rejects.toThrow(
+      'Incomplete IF/END-IF statement. Make sure each IF-statement has a corresponding END-IF command.'
+    );
+  });
+
+  it('Incomplete conditional statement: missing IF statement', async () => {
+    const template = await fs.promises.readFile(
+      path.join(__dirname, 'fixtures', 'unmatchedEndIf.docx')
+    );
+    await expect(
+      createReport({
+        noSandbox,
+        template,
+        data: {},
+        rejectNullish: false, // needs to be false for the expected error to trigger instead of the NullishCommandResultError.
+      })
+    ).rejects.toThrow(
+      `Unexpected END-IF outside of IF statement context: END-IF`
+    );
+  });
 });
