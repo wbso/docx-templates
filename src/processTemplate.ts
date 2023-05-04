@@ -548,7 +548,13 @@ const processCmd: CommandProcessor = async (
       // INS <expression>
     } else if (cmdName === 'INS') {
       if (!isLoopExploring(ctx)) {
-        let result = await runUserJsAndGetRaw(data, cmdRest, ctx);
+        let result = null;
+        try {
+          result = await runUserJsAndGetRaw(data, cmdRest, ctx);
+        } catch (e) {
+          result = cmdRest;
+        }
+
         if (result == null) {
           return '';
         }

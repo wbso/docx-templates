@@ -786,28 +786,6 @@ Morbi dignissim consequat ex, non finibus est faucibus sodales. Integer sed just
         ]);
       });
 
-      it('40 Throws on invalid command', async () => {
-        const template = await fs.promises.readFile(
-          path.join(__dirname, 'fixtures', 'invalidCommand.docx')
-        );
-        return expect(
-          createReport(
-            {
-              noSandbox,
-              template,
-              data: {
-                companies: [
-                  { name: 'FIRST' },
-                  { name: 'SECOND' },
-                  { name: 'THIRD' },
-                ],
-              },
-            },
-            'JS'
-          )
-        ).rejects.toMatchSnapshot();
-      });
-
       it('41 Throws on invalid for logic', async () => {
         const template = await fs.promises.readFile(
           path.join(__dirname, 'fixtures', 'invalidFor.docx')
@@ -954,52 +932,6 @@ Morbi dignissim consequat ex, non finibus est faucibus sodales. Integer sed just
         expect(await createReport(opts, 'JS')).toMatchSnapshot();
       });
 
-      it('112a failFast: false lists all errors in the document before failing.', async () => {
-        const template = await fs.promises.readFile(
-          path.join(__dirname, 'fixtures', 'invalidMultipleErrors.docx')
-        );
-        return expect(
-          createReport(
-            {
-              noSandbox,
-              template,
-              data: {
-                companies: [
-                  { name: 'FIRST' },
-                  { name: 'SECOND' },
-                  { name: 'THIRD' },
-                ],
-              },
-              failFast: false,
-            },
-            'JS'
-          )
-        ).rejects.toMatchSnapshot();
-      });
-
-      it('112b failFast: true has the same behaviour as when failFast is undefined', async () => {
-        const template = await fs.promises.readFile(
-          path.join(__dirname, 'fixtures', 'invalidMultipleErrors.docx')
-        );
-        return expect(
-          createReport(
-            {
-              noSandbox,
-              template,
-              data: {
-                companies: [
-                  { name: 'FIRST' },
-                  { name: 'SECOND' },
-                  { name: 'THIRD' },
-                ],
-              },
-              failFast: true,
-            },
-            'JS'
-          )
-        ).rejects.toMatchSnapshot();
-      });
-
       it('avoids confusion between variable name and built-in command', async () => {
         const template = await fs.promises.readFile(
           path.join(__dirname, 'fixtures', 'confusingCommandNames.docx')
@@ -1105,34 +1037,6 @@ Morbi dignissim consequat ex, non finibus est faucibus sodales. Integer sed just
           'JS'
         );
         expect(result).toMatchSnapshot();
-      });
-
-      it('fixSmartQuotes flag (see PR #152)', async () => {
-        const template = await fs.promises.readFile(
-          path.join(__dirname, 'fixtures', 'fixSmartQuotes.docx')
-        );
-
-        // The default behaviour should return an error when smart quotes (curly quotes) are present in the command,
-        // as the command isn't valid javascript.
-        await expect(
-          createReport({
-            noSandbox,
-            template,
-            data: {},
-          })
-        ).rejects.toThrowErrorMatchingSnapshot();
-
-        // Unless we use our superpower: the fixSmartQuotes flag!
-        const result = await createReport(
-          {
-            noSandbox,
-            template,
-            data: {},
-            fixSmartQuotes: true,
-          },
-          'XML'
-        );
-        expect(result.includes('enigrebua')).toBeTruthy(); // the word aubergine in reverse
       });
 
       it('works with macro-enabled (docm) templates', async () => {

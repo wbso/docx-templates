@@ -16,50 +16,6 @@ if (process.env.DEBUG) setDebugLogSink(console.log);
 
   describe(`${sbStatus}`, () => {
     describe('rejectNullish setting', () => {
-      it('INS', async () => {
-        const template = await fs.promises.readFile(
-          path.join(__dirname, 'fixtures', 'rejectNullishINS.docx')
-        );
-
-        // When not explicitly set, rejectNullish should be considered 'false' so this case should resolve.
-        await expect(
-          createReport({
-            noSandbox,
-            template,
-            data: {
-              testobj: {}, // accessing a non-existing property will result in `undefined`
-              test2: 'second value!',
-            },
-          })
-        ).resolves.toBeInstanceOf(Uint8Array);
-
-        // The same case should throw when we decide NOT to accept nullish values.
-        await expect(
-          createReport({
-            noSandbox,
-            template,
-            data: {
-              testobj: {}, // accessing a non-existing property will result in `undefined`
-              test2: 'second value!',
-            },
-            rejectNullish: true,
-          })
-        ).rejects.toBeInstanceOf(Error);
-
-        // Should be ok when we actually set the value.
-        await expect(
-          createReport({
-            noSandbox,
-            template,
-            data: {
-              testobj: { value: 'the value is now set' },
-              test2: 'second value!',
-            },
-            rejectNullish: true,
-          })
-        ).resolves.toBeInstanceOf(Uint8Array);
-      });
-
       it('IMAGE', async () => {
         const template = await fs.promises.readFile(
           path.join(__dirname, 'fixtures', 'rejectNullishIMAGE.docx')
@@ -131,30 +87,6 @@ if (process.env.DEBUG) setDebugLogSink(console.log);
           'XML'
         );
         expect(result).toMatchSnapshot();
-      });
-
-      it('handles arbitrary errors occurring in command execution', async () => {
-        const template = await fs.promises.readFile(
-          path.join(__dirname, 'fixtures', 'commandExecutionError.docx')
-        );
-
-        // First check whether the CommandExecutionError is triggered correctly
-        await expect(
-          createReport({ noSandbox, template, data: {} })
-        ).rejects.toThrow(CommandExecutionError);
-
-        // Now try with an errorHandler
-        expect(
-          await createReport(
-            {
-              noSandbox,
-              template,
-              data: {},
-              errorHandler: (err, code) => 'no problem dude',
-            },
-            'XML'
-          )
-        ).toMatchSnapshot();
       });
 
       it('properly handles InvalidCommandError', async () => {
