@@ -1,4 +1,4 @@
-# Docx-templates [![Build Status](https://travis-ci.org/guigrpa/docx-templates.svg)](https://travis-ci.org/guigrpa/docx-templates) [![Coverage Status](https://coveralls.io/repos/github/guigrpa/docx-templates/badge.svg?branch=master)](https://coveralls.io/github/guigrpa/docx-templates?branch=master) [![npm version](https://img.shields.io/npm/v/docx-templates.svg)](https://www.npmjs.com/package/docx-templates)
+# Docx-templates [![Coverage Status](https://coveralls.io/repos/github/guigrpa/docx-templates/badge.svg?branch=master)](https://coveralls.io/github/guigrpa/docx-templates?branch=master) [![npm version](https://img.shields.io/npm/v/docx-templates.svg)](https://www.npmjs.com/package/docx-templates)
 
 Template-based docx report creation for both Node and the browser. ([See the blog post](http://guigrpa.github.io/2017/01/01/word-docs-the-relay-way/)).
 
@@ -198,7 +198,7 @@ You can find an example implementation of `saveDataToFile()` [in the Webpack exa
 Check out the examples [using Webpack](https://github.com/guigrpa/docx-templates/tree/master/examples/example-webpack) and [using Browserify](https://github.com/guigrpa/docx-templates/tree/master/examples/example-browserify) or you can use the browserified bundle directly as discussed below.
 
 ## Polyfilled browser-ready bundle
-As this library depends on the internal NodeJS modules `vm`, `stream`, `util`, `events` and the `Buffer` global, your build tools have to polyfill these modules when using the library in the browser. We provide a browser build wich includes the required polyfills. Its file size is about 300K uncompressed or 85K / 70K with gzip / brotli compression).
+As this library depends on the internal NodeJS modules `vm`, `stream`, `util`, `events` and the `Buffer` global, your build tools have to polyfill these modules when using the library in the browser. We provide a browser build which includes the required polyfills. Its file size is about 300K uncompressed or 85K / 70K with gzip / brotli compression).
 
 You can import the library directly **as a module** using e.g. the unpkg.com CDN, like below, or you can host the `/lib/browser.js` bundle yourself.
 
@@ -206,7 +206,7 @@ You can import the library directly **as a module** using e.g. the unpkg.com CDN
 import { createReport } from 'https://unpkg.com/docx-templates/lib/browser.js';
 ```
 
-this is good for testing or prototyping but you should keep in mind that the `browser.js` is `es2017` code wich is supported by only 95% of users. If you have to support IE or old browser versions, you are better off compiling it to your target. Also see the support table for `es2017` [here](https://caniuse.com/sr_es8).
+this is good for testing or prototyping but you should keep in mind that the `browser.js` is `es2017` code which is supported by only 95% of users. If you have to support IE or old browser versions, you are better off compiling it to your target. Also see the support table for `es2017` [here](https://caniuse.com/sr_es8).
 
 ## Browser template compatibility caveat
 Note that the JavaScript code in your .docx template will be run as-is by the browser. Transpilers like Babel can't see this code, and won't be able to polyfill it. This means that the JS code in your template needs to be compatible with the browsers you are targeting. In other words: don't use fancy modern syntax and functions in your template if you want older browsers, like IE11, to be able to render it.
@@ -443,6 +443,17 @@ Loop over a group of elements (resulting from the evaluation of a JavaScript exp
 
 Note that inside the loop, the variable relative to the current element being processed must be prefixed with `$`.
 
+It is possible to get the current element index of the inner-most loop with the variable `$idx`, starting from `0`. For example:
+```
++++FOR company IN companies+++
+Company (+++$idx+++): +++INS $company.name+++
+Executives:
++++FOR executive IN $company.executives+++
+-	+++$idx+++ +++$executive+++
++++END-FOR executive+++
++++END-FOR company+++
+```
+
 Since JavaScript expressions are supported, you can for example filter the loop domain:
 
 ```
@@ -655,10 +666,4 @@ Note that turning off the sandbox (`noSandbox: true`) is known to give significa
 
 # License (MIT)
 
-Copyright (c) [Guillermo Grau Panea](https://github.com/guigrpa) 2016-now
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+This Project is licensed under the MIT License. See [LICENSE](LICENSE) for more information.

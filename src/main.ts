@@ -1,4 +1,3 @@
-import { merge } from 'timm';
 import {
   zipLoad,
   zipGetText,
@@ -235,7 +234,7 @@ async function createReport(
   for (const [js, filePath] of prepped_secondaries) {
     // Grab the last used (highest) image id from the main document's context, but create
     // a fresh one for each secondary XML.
-    ctx = newContext(createOptions, ctx.imageId);
+    ctx = newContext(createOptions, ctx.imageAndShapeIdIncrement);
     const result = await produceJsReport(queryResult, js, ctx);
     if (result.status === 'errors') {
       throw result.errors;
@@ -472,8 +471,7 @@ const processImages = async (
   logger.debug('Completing document.xml.rels...');
   const relsPath = `${TEMPLATE_PATH}/_rels/${documentComponent}.rels`;
   const rels = await getRelsFromZip(zip, relsPath);
-  for (let i = 0; i < imageIds.length; i++) {
-    const imageId = imageIds[i];
+  for (const imageId of imageIds) {
     const { extension, data: imgData } = images[imageId];
     const imgName = `template_${documentComponent}_${imageId}${extension}`;
     logger.debug(`Writing image ${imageId} (${imgName})...`);

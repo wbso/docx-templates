@@ -159,7 +159,7 @@ if (process.env.DEBUG) setDebugLogSink(console.log);
 
       it('properly handles InvalidCommandError', async () => {
         const template = await fs.promises.readFile(
-          path.join(__dirname, 'fixtures', 'invalidMultipleErrors.docx')
+          path.join(__dirname, 'fixtures', 'invalidCommand.docx')
         );
 
         const errs: Error[] = [];
@@ -168,13 +168,7 @@ if (process.env.DEBUG) setDebugLogSink(console.log);
             {
               noSandbox,
               template,
-              data: {
-                companies: [
-                  { name: 'FIRST' },
-                  { name: 'SECOND' },
-                  { name: 'THIRD' },
-                ],
-              },
+              data: {},
               errorHandler: (err, code) => {
                 errs.push(err);
                 return `${err}`;
@@ -184,25 +178,19 @@ if (process.env.DEBUG) setDebugLogSink(console.log);
           )
         ).toMatchSnapshot();
 
-        expect(errs.some(e => e instanceof InvalidCommandError)).toBeTruthy();
+        expect(errs).toMatchSnapshot();
       });
 
       it('handler can decide to re-throw the error, crashing the render', async () => {
         const template = await fs.promises.readFile(
-          path.join(__dirname, 'fixtures', 'invalidMultipleErrors.docx')
+          path.join(__dirname, 'fixtures', 'invalidCommand.docx')
         );
 
         await expect(
           createReport({
             noSandbox,
             template,
-            data: {
-              companies: [
-                { name: 'FIRST' },
-                { name: 'SECOND' },
-                { name: 'THIRD' },
-              ],
-            },
+            data: {},
             errorHandler: (err, code) => {
               throw new Error('yeah, no!');
             },
@@ -260,10 +248,11 @@ if (process.env.DEBUG) setDebugLogSink(console.log);
         template,
         data: {},
         rejectNullish: true,
+
+        // We use failFast:false to ensure the error handling of a missing END-IF and missing END-FOR are not accidentally mixed, see Github issue #322.
+        failFast: false,
       })
-    ).rejects.toThrow(
-      'Incomplete IF/END-IF statement. Make sure each IF-statement has a corresponding END-IF command.'
-    );
+    ).rejects.toMatchSnapshot();
   });
 
   it('Incomplete conditional statement: missing IF statement', async () => {
@@ -279,6 +268,36 @@ if (process.env.DEBUG) setDebugLogSink(console.log);
       })
     ).rejects.toThrow(
       `Unexpected END-IF outside of IF statement context: END-IF`
+    );
+  });
+
+  it('Incomplete loop statement: unmatched END-FOR', async () => {
+    const template = await fs.promises.readFile(
+      path.join(__dirname, 'fixtures', 'unmatchedEndFor.docx')
+    );
+    await expect(
+      createReport({
+        noSandbox,
+        template,
+        data: {},
+      })
+    ).rejects.toThrow(
+      `Unexpected END-FOR outside of FOR loop context: END-FOR`
+    );
+  });
+
+  it('Incomplete loop statement: missing END-FOR', async () => {
+    const template = await fs.promises.readFile(
+      path.join(__dirname, 'fixtures', 'missingEndFor.docx')
+    );
+    await expect(
+      createReport({
+        noSandbox,
+        template,
+        data: {},
+      })
+    ).rejects.toThrow(
+      `Unterminated FOR-loop ('FOR c'). Make sure each FOR loop has a corresponding END-FOR command.`
     );
   });
 });

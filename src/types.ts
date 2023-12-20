@@ -37,9 +37,9 @@ export type QueryResolver = (
 
 type ErrorHandler = (e: Error, raw_code?: string) => any;
 
-type RunJSFunc = (o: { sandbox: Object; ctx: Object }) => {
-  modifiedSandbox: Object;
-  result: any;
+type RunJSFunc = (o: { sandbox: SandBox; ctx: Context }) => {
+  modifiedSandbox: SandBox;
+  result: unknown;
 };
 
 export type UserOptions = {
@@ -134,6 +134,12 @@ export type CreateReportOptions = {
   processLineBreaksAsNewText: boolean;
 };
 
+export type SandBox = {
+  __code__: string | undefined;
+  __result__: unknown | undefined;
+  [k: string]: unknown;
+};
+
 export type Context = {
   gCntIf: number;
   gCntEndIf: number;
@@ -147,7 +153,7 @@ export type Context = {
     'w:tr': BufferStatus;
   };
   pendingImageNode?: { image: NonTextNode; caption?: NonTextNode[] };
-  imageId: number;
+  imageAndShapeIdIncrement: number;
   images: Images;
   pendingLinkNode?: NonTextNode;
   linkId: number;
@@ -160,7 +166,7 @@ export type Context = {
   fJump: boolean;
   shorthands: { [shorthand: string]: string };
   options: CreateReportOptions;
-  jsSandbox?: Object;
+  jsSandbox?: SandBox;
   textRunPropsNode?: NonTextNode;
 };
 

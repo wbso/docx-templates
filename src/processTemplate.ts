@@ -22,6 +22,7 @@ import {
   Image,
   BUILT_IN_COMMANDS,
   ImageExtensions,
+  NonTextNode,
 } from './types';
 import {
   CommandSyntaxError,
@@ -30,10 +31,14 @@ import {
   ImageError,
   ObjectCommandResultError,
   IncompleteConditionalStatementError,
+  UnterminatedForLoopError,
 } from './errors';
 import { logger } from './debug';
 
-export function newContext(options: CreateReportOptions, imageId = 0): Context {
+export function newContext(
+  options: CreateReportOptions,
+  imageAndShapeIdIncrement = 0
+): Context {
   return {
     gCntIf: 0,
     gCntEndIf: 0,
@@ -45,7 +50,7 @@ export function newContext(options: CreateReportOptions, imageId = 0): Context {
       'w:p': { text: '', cmds: '', fInsertedText: false },
       'w:tr': { text: '', cmds: '', fInsertedText: false },
     },
-    imageId,
+    imageAndShapeIdIncrement,
     images: {},
     linkId: 0,
     links: {},
@@ -383,6 +388,17 @@ export async function walkTemplate(
       const newNode: Node = cloneNodeWithoutChildren(nodeIn);
       newNode._parent = nodeOut;
       nodeOut._children.push(newNode);
+
+      // Update shape IDs in mc:AlternateContent
+      const newNodeTag = (newNode as NonTextNode)._tag;
+      if (
+        !isLoopExploring(ctx) &&
+        (newNodeTag === 'wp:docPr' || newNodeTag === 'v:shape')
+      ) {
+        logger.debug('detected a - ', debugPrintNode(newNode));
+        updateID(newNode as NonTextNode, ctx);
+      }
+
       const parent = nodeIn._parent;
 
       // If it's a text node inside a w:t, process it
@@ -422,10 +438,21 @@ export async function walkTemplate(
   }
 
   if (ctx.gCntIf !== ctx.gCntEndIf) {
-    if (ctx.options?.failFast) {
-      throw new IncompleteConditionalStatementError();
+    const err = new IncompleteConditionalStatementError();
+    if (ctx.options.failFast) {
+      throw err;
     } else {
-      errors.push(new IncompleteConditionalStatementError());
+      errors.push(err);
+    }
+  }
+
+  if (ctx.loops.filter(l => !l.isIf).length > 0) {
+    const innermost_loop = ctx.loops[ctx.loops.length - 1];
+    const err = new UnterminatedForLoopError(innermost_loop);
+    if (ctx.options.failFast) {
+      throw err;
+    } else {
+      errors.push(err);
     }
   }
 
@@ -764,13 +791,15 @@ const processEndForIf = (
   cmdName: string,
   cmdRest: string
 ): void => {
+  const isIf = cmdName === 'END-IF';
   const curLoop = getCurLoop(ctx);
   if (!curLoop)
     throw new InvalidCommandError(
-      'Unexpected END-IF outside of IF statement context',
+      `Unexpected ${cmdName} outside of ${
+        isIf ? 'IF statement' : 'FOR loop'
+      } context`,
       cmd
     );
-  const isIf = cmdName === 'END-IF';
 
   // First time we visit an END-IF node, we assign it the arbitrary name
   // generated when the IF was processed
@@ -812,8 +841,8 @@ const processEndForIf = (
 
 const imageToContext = (ctx: Context, img: Image) => {
   validateImage(img);
-  ctx.imageId += 1;
-  const id = String(ctx.imageId);
+  ctx.imageAndShapeIdIncrement += 1;
+  const id = String(ctx.imageAndShapeIdIncrement);
   const relId = `img${id}`;
   ctx.images[relId] = img;
   return relId;
@@ -853,7 +882,7 @@ const processImage = (ctx: Context, imagePars: ImagePars) => {
   const cy = (imagePars.height * 360e3).toFixed(0);
 
   let imgRelId = imageToContext(ctx, getImageData(imagePars));
-  const id = String(ctx.imageId);
+  const id = String(ctx.imageAndShapeIdIncrement);
   const alt = imagePars.alt || 'desc';
   const node = newNonTextNode;
 
@@ -1015,3 +1044,12 @@ const appendTextToTagBuffers = (
     if (fInsertedText) buf.fInsertedText = true;
   });
 };
+
+function updateID(newNode: NonTextNode, ctx: Context) {
+  ctx.imageAndShapeIdIncrement += 1;
+  const id = String(ctx.imageAndShapeIdIncrement);
+  newNode._attrs = {
+    ...newNode._attrs,
+    id: `${id}`,
+  };
+}
